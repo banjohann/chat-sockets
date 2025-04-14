@@ -28,6 +28,8 @@ public class ClientHandler implements Runnable {
                 return;
             }
 
+            out.println("name: " + clientName);
+
             clientSockets.put(clientName, clientSocket);
 
             String line;

@@ -6,13 +6,12 @@ import java.net.Socket;
 public class Main {
 
     public static void main(String[] args) {
-
         try {
             Socket clientSocket = new Socket("127.0.0.1", 8080);
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            out.write("name");
+            out.write("name\n");
             out.flush();
 
             String resp = in.readLine();
