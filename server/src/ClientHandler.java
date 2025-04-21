@@ -8,7 +8,6 @@ import java.util.Map;
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final Map<String, Socket> clientSockets;
-    private String clientName;
 
     public ClientHandler(Socket clientSocket, Map<String, Socket> clientSockets) {
         this.clientSocket = clientSocket;
@@ -21,14 +20,14 @@ public class ClientHandler implements Runnable {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
-            clientName = in.readLine();
+            String clientName = in.readLine();
             System.out.println("Client connected: " + clientName);
             if (clientName == null || clientName.trim().isEmpty()) {
                 out.println("Invalid name. Connection closing.");
                 return;
             }
 
-            out.println("name: " + clientName);
+            out.println("Connected!");
 
             clientSockets.put(clientName, clientSocket);
 

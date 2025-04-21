@@ -1,6 +1,7 @@
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Map;
+import java.util.Set;
 
 public class CommandHandler {
 
@@ -57,9 +58,16 @@ public class CommandHandler {
     }
 
     private static void handleListUsers(String requester, Map<String, Socket> clientSockets) {
-        String message = String.join(", ", clientSockets.keySet());
-        Socket destination = clientSockets.get(requester);
+        Set<String> users = clientSockets.keySet();
+        users.remove(requester);
 
+        String message = "Nenhum usuário conectado!";
+
+        if (!users.isEmpty()) {
+            message = String.join(", ", clientSockets.keySet());
+        }
+
+        Socket destination = clientSockets.get(requester);
         sendMessageToClient(message, destination);
     }
 
