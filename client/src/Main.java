@@ -38,6 +38,13 @@ public class Main {
                     Message.ofSendMessage(name, user, message).write(out);
                 }
 
+                if (command.startsWith("/send file")) {
+                    String parts[] = command.split(" ", 4);
+                    String user = parts[2];
+                    String message = parts[3];
+                    Message.ofSendFile(name, user, message).write(out);
+                }
+
                 if ("/users".equalsIgnoreCase(command)) {
                     Message.ofListUsers(name).write(out);
                 }

@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 public class Command {
     private String from;
     private String destination;
+    private String filePath;
     private byte[] contentBytes;
     private CommandType type;
 
@@ -12,11 +13,15 @@ public class Command {
     }
 
     public Command withHeader(String header) {
-        String[] parts = header.split(":", 4);
+        String[] parts = header.split(":", 5);
         this.from = parts[0];
         this.type = CommandType.valueOf(parts[1].toUpperCase());
         this.destination = parts[2];
         this.contentBytes = new byte[Integer.parseInt(parts[3])];
+
+        if (CommandType.FILE.equals(this.type)) {
+            this.filePath = parts[4];
+        }
 
         return this;
     }
@@ -27,7 +32,7 @@ public class Command {
     }
 
     public String getHeader() {
-        return String.format("%s:%s:%s:%d\n", from, type.name(), destination, contentBytes.length);
+        return String.format("%s:%s:%s:%d:%s\n", from, type.name(), destination, contentBytes.length, filePath);
     }
 
     public static Command ofError(String destination, String message) {
