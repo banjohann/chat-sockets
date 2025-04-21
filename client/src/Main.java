@@ -17,13 +17,12 @@ public class Main {
 
             Message.ofConnect(name).write(out);
 
-            // Inicia thread que recebe mensagens
             new Thread(new InboxListener(in)).start();
 
             System.out.println("""
                     Comandos disponíveis:
                      /send message <user> <message> -> Para enviar uma mensagem para um usuário
-                     /send file <user> <message> -> Para enviar um arquivo para um usuário
+                     /send file <user> <message> -> Para enviar um arquivo para um usuário (o arquivo deve estar dentro da pasta files/)
                      /users -> Para listar os usuários conectados
                      /quit -> Para sair da aplicação
                      /help -> Para listar os comandos disponíveis
@@ -58,7 +57,7 @@ public class Main {
                     System.out.println("""
                     Comandos disponíveis:
                      /send message <user> <message> -> Para enviar uma mensagem para um usuário
-                     /send file <user> <message> -> Para enviar um arquivo para um usuário
+                     /send file <user> <message> -> Para enviar um arquivo para um usuário (o arquivo deve estar dentro da pasta files/)
                      /users -> Para listar os usuários conectados
                      /quit -> Para sair da aplicação
                      /help -> Para listar os comandos disponíveis
