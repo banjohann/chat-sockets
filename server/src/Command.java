@@ -26,15 +26,19 @@ public class Command {
         return this;
     }
 
-    public Command(String from, String destination, byte[] contentBytes, CommandType type) {
-        this.from = from;
-        this.destination = destination;
-        this.contentBytes = contentBytes;
-        this.type = type;
-    }
-
     public String getHeader() {
         return String.format("%s:%s:%s:%d\n", from, type.name(), destination, contentBytes.length);
+    }
+
+    public static Command ofError(String destination, String message) {
+        return new Command("SERVER", destination, CommandType.ERROR, message.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private Command(String from, String destination, CommandType commandType, byte[] contentBytes) {
+        this.from = from;
+        this.destination = destination;
+        this.type = commandType;
+        this.contentBytes = contentBytes;
     }
 
     public void setFrom(String from) {

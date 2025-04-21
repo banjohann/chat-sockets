@@ -25,28 +25,24 @@ public class CommandHandler {
     }
 
     private static void handleSendMessage(Command command, ConcurrentHashMap<String, Socket> clientSockets) {
-        if (command.getContent().isEmpty()) {
-            System.err.println("Invalid MESSAGE command format.");
-            return;
-        }
-
-        Socket destination = clientSockets.get(command.getDestination());
-        if (destination == null) {
-            destination = clientSockets.get(command.getFrom());
-            String message = "Usuário" + command.getDestination() + " não encontrado.";
-
-            command.setContent(message);
-            command.setFrom(command.getFrom());
-
-            sendMessageToClient(command, destination);
-            return;
-        }
+        Socket destination = getClientSocketOrSendError(command, clientSockets);
+        if (destination == null) return;
 
         sendMessageToClient(command, destination);
     }
 
     private static void handleSendFile(Command command, ConcurrentHashMap<String, Socket> clientSockets) {
+        Socket destination = getClientSocketOrSendError(command, clientSockets);
+        if (destination == null) return;
 
+        try {
+            DataOutputStream out = new DataOutputStream(destination.getOutputStream());
+            out.write(command.getHeader().getBytes(StandardCharsets.UTF_8));
+            out.write(command.getContentBytes());
+            out.flush();
+        } catch (Exception e) {
+            System.err.println("Error sending file: " + e.getMessage());
+        }
     }
 
     private static void handleListUsers(Command command, ConcurrentHashMap<String, Socket> clientSockets) {
@@ -74,5 +70,18 @@ public class CommandHandler {
         } catch (Exception e) {
             System.err.println("Error sending message: " + e.getMessage());
         }
+    }
+
+    private static Socket getClientSocketOrSendError(Command command, ConcurrentHashMap<String, Socket> clientSockets) {
+        Socket destination = clientSockets.get(command.getDestination());
+        if (destination == null) {
+            destination = clientSockets.get(command.getFrom());
+            String message = "Usuário " + command.getDestination() + " não encontrado.";
+
+            Command error = Command.ofError(command.getFrom(), message);
+
+            sendMessageToClient(error, destination);
+        }
+        return destination;
     }
 }

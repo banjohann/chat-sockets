@@ -1,5 +1,6 @@
 public enum CommandType {
     CONNECT,
+    ERROR,
     FILE,
     MESSAGE,
     USERS;
