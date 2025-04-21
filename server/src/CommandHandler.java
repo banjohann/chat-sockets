@@ -1,17 +1,20 @@
+import java.io.DataOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CommandHandler {
 
-    public static void handleCommand(Command command, Map<String, Socket> clientSockets) {
+    public static void handleCommand(Command command, ConcurrentHashMap<String, Socket> clientSockets) {
         switch (command.getType()) {
             case MESSAGE:
                 handleSendMessage(command, clientSockets);
                 break;
             case USERS:
-                handleListUsers(command.getRequester(), clientSockets);
+                handleListUsers(command, clientSockets);
                 break;
             case FILE:
                 handleSendFile(command, clientSockets);
@@ -21,7 +24,7 @@ public class CommandHandler {
         }
     }
 
-    private static void handleSendMessage(Command command, Map<String, Socket> clientSockets) {
+    private static void handleSendMessage(Command command, ConcurrentHashMap<String, Socket> clientSockets) {
         if (command.getContent().isEmpty()) {
             System.err.println("Invalid MESSAGE command format.");
             return;
@@ -29,54 +32,45 @@ public class CommandHandler {
 
         Socket destination = clientSockets.get(command.getDestination());
         if (destination == null) {
-            destination = clientSockets.get(command.getRequester());
-            String message = "User " + command.getDestination() + " not found.";
+            destination = clientSockets.get(command.getFrom());
+            String message = "Usuário" + command.getDestination() + " não encontrado.";
 
-            sendMessageToClient(message, destination);
+            command.setContent(message);
+            command.setFrom(command.getFrom());
+
+            sendMessageToClient(command, destination);
             return;
         }
 
-        sendMessageToClient(command.getContent(), destination);
+        sendMessageToClient(command, destination);
     }
 
-    private static void handleSendFile(Command command, Map<String, Socket> clientSockets) {
-        if (command.getContent().isEmpty()) {
-            System.err.println("Invalid FILE command format.");
-            return;
-        }
+    private static void handleSendFile(Command command, ConcurrentHashMap<String, Socket> clientSockets) {
 
-        Socket destination = clientSockets.get(command.getDestination());
-        if (destination == null) {
-            destination = clientSockets.get(command.getRequester());
-            String message = "User " + command.getDestination() + " not found.";
-
-            sendMessageToClient(message, destination);
-            return;
-        }
-
-        sendMessageToClient(command.getContent(), destination);
     }
 
-    private static void handleListUsers(String requester, Map<String, Socket> clientSockets) {
+    private static void handleListUsers(Command command, ConcurrentHashMap<String, Socket> clientSockets) {
         Set<String> users = clientSockets.keySet();
-        users.remove(requester);
-
         String message = "Nenhum usuário conectado!";
 
         if (!users.isEmpty()) {
             message = String.join(", ", clientSockets.keySet());
         }
 
-        Socket destination = clientSockets.get(requester);
-        sendMessageToClient(message, destination);
+        command.setContent(message);
+        Socket destination = clientSockets.get(command.getFrom());
+        sendMessageToClient(command, destination);
     }
 
-    private static void sendMessageToClient(String message, Socket clientSocket) {
+    private static void sendMessageToClient(Command command, Socket clientSocket) {
         if (clientSocket == null) return;
 
         try {
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-            out.println(message);
+            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+
+            out.write(command.getHeader().getBytes(StandardCharsets.UTF_8));
+            out.write(command.getContentBytes());
+            out.flush();
         } catch (Exception e) {
             System.err.println("Error sending message: " + e.getMessage());
         }

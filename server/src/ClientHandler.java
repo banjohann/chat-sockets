@@ -1,51 +1,53 @@
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientHandler implements Runnable {
+    private String clientName;
     private final Socket clientSocket;
-    private final Map<String, Socket> clientSockets;
+    private final ConcurrentHashMap<String, Socket> clientSockets;
 
-    public ClientHandler(Socket clientSocket, Map<String, Socket> clientSockets) {
+    public ClientHandler(Socket clientSocket, ConcurrentHashMap<String, Socket> clientSockets) {
         this.clientSocket = clientSocket;
         this.clientSockets = clientSockets;
     }
 
     @Override
     public void run() {
-        try (
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
-
-            String clientName = in.readLine();
-            System.out.println("Client connected: " + clientName);
-            if (clientName == null || clientName.trim().isEmpty()) {
-                out.println("Invalid name. Connection closing.");
-                return;
-            }
-
-            out.println("Connected!");
+        try (DataInputStream in = new DataInputStream(clientSocket.getInputStream())) {
+            String connectHeader = readLine(in);
+            Command connectCmd = new Command().withHeader(connectHeader).withContent(in);
+            clientName = connectCmd.getFrom();
 
             clientSockets.put(clientName, clientSocket);
 
-            String line;
-            while ((line = in.readLine()) != null) {
-                Command command = Command.fromLine(line, clientName);
-                CommandHandler.handleCommand(command, clientSockets);
+            while (true) {
+                String header = readLine(in);
+                Command currentCmd = new Command().withHeader(header).withContent(in);
+                CommandHandler.handleCommand(currentCmd, clientSockets);
             }
 
-            clientSockets.remove(clientName);
         } catch (Exception e) {
             System.err.println("Error handling client: " + e.getMessage());
         } finally {
             try {
+                clientSockets.remove(clientName);
                 clientSocket.close();
             } catch (IOException e) {
                 System.err.println("Error closing client socket: " + e.getMessage());
             }
         }
+    }
+
+    private static String readLine(DataInputStream in) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte b;
+        while ((b = in.readByte()) != '\n') {
+            buffer.write(b);
+        }
+        return buffer.toString(StandardCharsets.UTF_8);
     }
 }

@@ -1,12 +1,11 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
     private final ServerSocket serverSocket;
-    private final Map<String, Socket> clientSockets = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Socket> clientSockets = new ConcurrentHashMap<>();
 
     public Server(int port) throws IOException {
         serverSocket = new ServerSocket(port);
