@@ -25,10 +25,10 @@ compile_server:
 run_client: compile_client
 	java -cp client/out Main
 
-.PHONY: run_servidor
+.PHONY: run_server
 run_server: compile_server
 	java -cp server/out Main
 
 .PHONY: clean
 clean:
-	rm -rf $(OUT_DIR)
+	rm -rf server/out client/out
